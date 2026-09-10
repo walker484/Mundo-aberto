@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Criar Avatar</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #07111f, #102a43);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 900px;
+      background: #0c1828;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .criacao {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    /* AVATAR */
+    .area-avatar {
+      min-height: 450px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #14263b;
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .avatar {
+      position: relative;
+      width: 220px;
+      height: 330px;
+    }
+
+    .cabeca {
+      position: absolute;
+      width: 110px;
+      height: 125px;
+      background: #c6865a;
+      border-radius: 50%;
+      top: 20px;
+      left: 55px;
+      z-index: 3;
+    }
+
+    .cabelo {
+      position: absolute;
+      width: 120px;
+      height: 70px;
+      background: #24160e;
+      border-radius: 60% 60% 30% 30%;
+      top: 10px;
+      left: 50px;
+      z-index: 4;
+    }
+
+    .olho {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #111;
+      border-radius: 50%;
+      top: 72px;
+      z-index: 5;
+    }
+
+    .olho1 {
+      left: 82px;
+    }
+
+    .olho2 {
+      left: 125px;
+    }
+
+    .boca {
+      position: absolute;
+      width: 35px;
+      height: 8px;
+      border-bottom: 3px solid #8a3f3f;
+      top: 105px;
+      left: 93px;
+      z-index: 5;
+    }
+
+    .corpo {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      background: #2468a8;
+      border-radius: 35px 35px 10px 10px;
+      top: 140px;
+      left: 35px;
+      z-index: 2;
+    }
+
+    .braco {
+      position: absolute;
+      width: 45px;
+      height: 130px;
+      background: #c6865a;
+      border-radius: 25px;
+      top: 150px;
+      z-index: 1;
+    }
+
+    .braco1 {
+      left: 10px;
+      transform: rotate(8deg);
+    }
+
+    .braco2 {
+      right: 10px;
+      transform: rotate(-8deg);
+    }
+
+    .perna {
+      position: absolute;
+      width: 55px;
+      height: 100px;
+      background: #202b3a;
+      top: 270px;
+      border-radius: 10px;
+    }
+
+    .perna1 {
+      left: 55px;
+    }
+
+    .perna2 {
+      right: 55px;
+    }
+
+    /* CONTROLES */
+
+    .controles {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #20354d;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #19a463;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #21c478;
+    }
+
+    #mensagem {
+      text-align: center;
+      margin-top: 15px;
+      color: #42e89b;
+      font-weight: bold;
+    }
+
+    @media (max-width: 700px) {
+      .criacao {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🎮 CRIE SEU PERSONAGEM</h1>
+
+    <div class="criacao">
+
+      <!-- AVATAR -->
+      <div class="area-avatar">
+
+        <div class="avatar">
+
+          <div class="cabelo" id="cabelo"></div>
+
+          <div class="cabeca" id="cabeca">
+            <div class="olho olho1"></div>
+            <div class="olho olho2"></div>
+            <div class="boca"></div>
+          </div>
+
+          <div class="braco braco1"></div>
+          <div class="braco braco2"></div>
+
+          <div class="corpo" id="corpo"></div>
+
+          <div class="perna perna1"></div>
+          <div class="perna perna2"></div>
+
+        </div>
+
+        <h2 id="nomeMostrado">Seu personagem</h2>
+
+      </div>
+
+      <!-- CONFIGURAÇÃO -->
+      <div class="controles">
+
+        <label>Nome do personagem</label>
+
+        <input
+          type="text"
+          id="nome"
+          placeholder="Digite o nome"
+          oninput="mudarNome()"
+        >
+
+        <label>Cor da pele</label>
+
+        <select id="pele" onchange="mudarPele()">
+          <option value="#c6865a">Pele 1</option>
+          <option value="#8d5524">Pele 2</option>
+          <option value="#f1c27d">Pele 3</option>
+          <option value="#ffdbac">Pele 4</option>
+          <option value="#5c3836">Pele 5</option>
+        </select>
+
+        <label>Cabelo</label>
+
+        <select id="cabeloEscolha" onchange="mudarCabelo()">
+          <option value="#24160e">Preto</option>
+          <option value="#6b3e1e">Castanho</option>
+          <option value="#d6b25e">Loiro</option>
+          <option value="#eeeeee">Branco</option>
+          <option value="#b51f1f">Vermelho</option>
+        </select>
+
+        <label>Roupa</label>
+
+        <select id="roupa" onchange="mudarRoupa()">
+          <option value="#2468a8">Azul</option>
+          <option value="#202020">Preta</option>
+          <option value="#b52b2b">Vermelha</option>
+          <option value="#278044">Verde</option>
+          <option value="#eeeeee">Branca</option>
+        </select>
+
+        <button onclick="criarPersonagem()">
+          ✅ CONFIRMAR PERSONAGEM
+        </button>
+
+        <div id="mensagem"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    function mudarNome() {
+      const nome = document.getElementById("nome").value;
+
+      document.getElementById("nomeMostrado").innerText =
+        nome || "Seu personagem";
+    }
+
+    function mudarPele() {
+
+      const cor =
+        document.getElementById("pele").value;
+
+      document.getElementById("cabeca").style.background =
+        cor;
+
+      document.querySelector(".braco1").style.background =
+        cor;
+
+      document.querySelector(".braco2").style.background =
+        cor;
+    }
+
+    function mudarCabelo() {
+
+      const cor =
+        document.getElementById("cabeloEscolha").value;
+
+      document.getElementById("cabelo").style.background =
+        cor;
+    }
+
+    function mudarRoupa() {
+
+      const cor =
+        document.getElementById("roupa").value;
+
+      document.getElementById("corpo").style.background =
+        cor;
+    }
+
+    function criarPersonagem() {
+
+      const nome =
+        document.getElementById("nome").value;
+
+      if (nome.trim() === "") {
+
+        alert("Digite um nome para o personagem!");
+
+        return;
+      }
+
+      localStorage.setItem(
+        "nomePersonagem",
+        nome
+      );
+
+      localStorage.setItem(
+        "pelePersonagem",
+        document.getElementById("pele").value
+      );
+
+      localStorage.setItem(
+        "cabeloPersonagem",
+        document.getElementById("cabeloEscolha").value
+      );
+
+      localStorage.setItem(
+        "roupaPersonagem",
+        document.getElementById("roupa").value
+      );
+
+      document.getElementById("mensagem").innerText =
+        "✅ Personagem criado com sucesso!";
+    }
+
+  </script>
+
+</body>
+</html>
