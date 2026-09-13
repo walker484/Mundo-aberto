@@ -2,866 +2,1084 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mundo Aberto 3D</title>
 
-<title>Mundo Aberto 3D</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-<style>
-*{box-sizing:border-box}
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #87ceeb;
+      font-family: Arial, sans-serif;
+    }
 
-body{
-  margin:0;
-  overflow:hidden;
-  background:#87ceeb;
-  font-family:Arial,sans-serif;
-  touch-action:none;
-}
+    #game {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
 
-#info{
-  position:fixed;
-  top:10px;
-  left:10px;
-  z-index:50;
-  color:white;
-  background:rgba(0,0,0,.7);
-  padding:10px 14px;
-  border-radius:10px;
-}
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 10;
+      color: white;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
 
-#joystick{
-  position:fixed;
-  left:20px;
-  bottom:20px;
-  width:130px;
-  height:130px;
-  border-radius:50%;
-  background:rgba(255,255,255,.20);
-  border:2px solid rgba(255,255,255,.7);
-  z-index:50;
-}
+    #joystick {
+      position: fixed;
+      left: 25px;
+      bottom: 30px;
+      width: 125px;
+      height: 125px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.4);
+      z-index: 20;
+      touch-action: none;
+    }
 
-#bolinha{
-  position:absolute;
-  width:58px;
-  height:58px;
-  left:34px;
-  top:34px;
-  border-radius:50%;
-  background:rgba(255,255,255,.8);
-}
+    #stick {
+      position: absolute;
+      left: 35px;
+      top: 35px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.75);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
 
-#correr{
-  position:fixed;
-  right:25px;
-  bottom:35px;
-  width:80px;
-  height:80px;
-  border:0;
-  border-radius:50%;
-  background:rgba(255,255,255,.8);
-  font-size:28px;
-  z-index:50;
-}
-</style>
+    #run {
+      position: fixed;
+      right: 25px;
+      bottom: 35px;
+      width: 75px;
+      height: 75px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.75);
+      font-weight: bold;
+      z-index: 20;
+      touch-action: none;
+    }
+
+    #look {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 55%;
+      height: 65%;
+      z-index: 5;
+      touch-action: none;
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="info">🏙️ CIDADE VIVA 3D</div>
+  <div id="hud">
+    🌎 MUNDO ABERTO 3D<br>
+    💰 Dinheiro: R$ 0
+  </div>
 
-<div id="joystick">
-  <div id="bolinha"></div>
-</div>
+  <canvas id="game"></canvas>
 
-<button id="correr">🏃</button>
+  <div id="look"></div>
 
-<script type="module">
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
 
-import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+  <button id="run">CORRER</button>
 
+  <script type="module">
 
-/* =====================================
-   CENA
-===================================== */
+    import * as THREE from
+      "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-const cena = new THREE.Scene();
+    // =========================
+    // CENA
+    // =========================
 
-cena.background =
-new THREE.Color(0x86c9ee);
+    const scene = new THREE.Scene();
 
+    scene.background = new THREE.Color(0x87ceeb);
 
-/* =====================================
-   CÂMERA
-===================================== */
+    // =========================
+    // CÂMERA
+    // =========================
 
-const camera =
-new THREE.PerspectiveCamera(
-  65,
-  innerWidth/innerHeight,
-  .1,
-  4000
-);
+    const camera = new THREE.PerspectiveCamera(
+      70,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      3000
+    );
 
+    camera.position.set(0, 8, 12);
 
-/* =====================================
-   RENDER
-===================================== */
+    // =========================
+    // RENDERIZADOR
+    // =========================
 
-const renderer =
-new THREE.WebGLRenderer({
-  antialias:true
-});
+    const renderer = new THREE.WebGLRenderer({
+      canvas: document.getElementById("game"),
+      antialias: true
+    });
 
-renderer.setSize(
-  innerWidth,
-  innerHeight
-);
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
 
-renderer.setPixelRatio(
-  Math.min(devicePixelRatio,1.5)
-);
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, 2)
+    );
 
-renderer.shadowMap.enabled=true;
+    renderer.shadowMap.enabled = true;
 
-document.body.appendChild(
-  renderer.domElement
-);
+    // =========================
+    // LUZ
+    // =========================
 
+    const sun = new THREE.DirectionalLight(
+      0xffffff,
+      2
+    );
 
-/* =====================================
-   LUZ
-===================================== */
+    sun.position.set(300, 500, 200);
 
-const sol =
-new THREE.DirectionalLight(
-  0xffffff,
-  2
-);
+    sun.castShadow = true;
 
-sol.position.set(
-  200,
-  300,
-  150
-);
+    scene.add(sun);
 
-sol.castShadow=true;
+    const ambient = new THREE.HemisphereLight(
+      0xffffff,
+      0x668866,
+      1.5
+    );
 
-cena.add(sol);
+    scene.add(ambient);
 
-const ambiente =
-new THREE.HemisphereLight(
-  0xffffff,
-  0x4b554b,
-  1.4
-);
+    // =========================
+    // CHÃO
+    // =========================
 
-cena.add(ambiente);
-
-
-/* =====================================
-   TERRENO
-===================================== */
-
-const terreno =
-new THREE.Mesh(
-  new THREE.PlaneGeometry(
-    1600,
-    1600
-  ),
-  new THREE.MeshStandardMaterial({
-    color:0x4d9148
-  })
-);
-
-terreno.rotation.x=-Math.PI/2;
-
-terreno.receiveShadow=true;
-
-cena.add(terreno);
-
-
-/* =====================================
-   RUAS
-===================================== */
-
-function criarRua(x,z,w,d){
-
-  const rua =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      w,
-      .18,
-      d
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x303030
-    })
-  );
-
-  rua.position.set(
-    x,.09,z
-  );
-
-  cena.add(rua);
-
-  /* faixas */
-
-  if(w<d){
-
-    for(let zz=z-d/2+15;
-        zz<z+d/2;
-        zz+=25){
-
-      const faixa =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          .5,
-          .03,
-          10
-        ),
-        new THREE.MeshStandardMaterial({
-          color:0xf2f2f2
-        })
+    const groundGeometry =
+      new THREE.PlaneGeometry(
+        1200,
+        1200
       );
 
-      faixa.position.set(
+    const groundMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0x4d8b45
+      });
+
+    const ground =
+      new THREE.Mesh(
+        groundGeometry,
+        groundMaterial
+      );
+
+    ground.rotation.x = -Math.PI / 2;
+
+    ground.receiveShadow = true;
+
+    scene.add(ground);
+
+    // =========================
+    // FUNÇÃO PARA CRIAR CUBO
+    // =========================
+
+    function criarCubo(
+      x,
+      y,
+      z,
+      largura,
+      altura,
+      profundidade,
+      cor
+    ) {
+
+      const geometry =
+        new THREE.BoxGeometry(
+          largura,
+          altura,
+          profundidade
+        );
+
+      const material =
+        new THREE.MeshStandardMaterial({
+          color: cor
+        });
+
+      const objeto =
+        new THREE.Mesh(
+          geometry,
+          material
+        );
+
+      objeto.position.set(
         x,
-        .2,
-        zz
-      );
-
-      cena.add(faixa);
-    }
-
-  }else{
-
-    for(let xx=x-w/2+15;
-        xx<x+w/2;
-        xx+=25){
-
-      const faixa =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          10,
-          .03,
-          .5
-        ),
-        new THREE.MeshStandardMaterial({
-          color:0xf2f2f2
-        })
-      );
-
-      faixa.position.set(
-        xx,
-        .2,
+        y,
         z
       );
 
-      cena.add(faixa);
+      objeto.castShadow = true;
+      objeto.receiveShadow = true;
+
+      scene.add(objeto);
+
+      return objeto;
     }
-  }
-}
 
-criarRua(0,0,36,1500);
-criarRua(0,0,1500,36);
+    // =========================
+    // RUAS
+    // =========================
 
-for(let p=-600;p<=600;p+=120){
-
-  criarRua(p,0,14,1500);
-  criarRua(0,p,1500,14);
-}
-
-
-/* =====================================
-   CALÇADAS
-===================================== */
-
-function calcada(x,z,w,d){
-
-  const c =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      w,
-      .25,
-      d
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x9b9b9b
-    })
-  );
-
-  c.position.set(
-    x,.25,z
-  );
-
-  cena.add(c);
-}
-
-
-/* =====================================
-   PRÉDIOS
-===================================== */
-
-function criarPredio(x,z,h,w=55,d=55){
-
-  const p =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      w,h,d
-    ),
-    new THREE.MeshStandardMaterial({
-      color:new THREE.Color(
-        .35+Math.random()*.25,
-        .35+Math.random()*.25,
-        .38+Math.random()*.25
-      )
-    })
-  );
-
-  p.position.set(
-    x,h/2,z
-  );
-
-  p.castShadow=true;
-
-  cena.add(p);
-
-  /* janelas frontais */
-
-  for(let y=9;y<h-4;y+=12){
-
-    for(let xx=-w/2+8;
-        xx<w/2-3;
-        xx+=12){
-
-      const janela =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          6,5,.4
-        ),
-        new THREE.MeshStandardMaterial({
-          color:0x8ed4f5
-        })
-      );
-
-      janela.position.set(
-        x+xx,
-        y,
-        z-d/2-.25
-      );
-
-      cena.add(janela);
-    }
-  }
-}
-
-
-/* prédios altos */
-
-criarPredio(180,180,110);
-criarPredio(280,180,150);
-criarPredio(380,180,190);
-
-criarPredio(180,280,130);
-criarPredio(280,280,180);
-criarPredio(380,280,100);
-
-criarPredio(-180,-180,90);
-criarPredio(-280,-180,140);
-criarPredio(-380,-180,180);
-
-
-/* =====================================
-   CASA
-===================================== */
-
-function criarCasa(x,z){
-
-  const terrenoCasa =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      82, .2, 82
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x65a653
-    })
-  );
-
-  terrenoCasa.position.set(
-    x,.1,z
-  );
-
-  cena.add(terrenoCasa);
-
-
-  const casa =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      42,18,34
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0xe2c29d
-    })
-  );
-
-  casa.position.set(
-    x,9,z
-  );
-
-  casa.castShadow=true;
-
-  cena.add(casa);
-
-
-  const telhado =
-  new THREE.Mesh(
-    new THREE.ConeGeometry(
-      31,13,4
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x823b2f
-    })
-  );
-
-  telhado.position.set(
-    x,23,z
-  );
-
-  telhado.rotation.y=
-  Math.PI/4;
-
-  cena.add(telhado);
-
-
-  const porta =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      7,10,.7
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x503322
-    })
-  );
-
-  porta.position.set(
-    x,5,z-17.2
-  );
-
-  cena.add(porta);
-
-
-  for(let xx of [-13,13]){
-
-    const janela =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        8,6,.6
-      ),
+    const roadMaterial =
       new THREE.MeshStandardMaterial({
-        color:0x6dc5ed
-      })
+        color: 0x292929
+      });
+
+    function criarRua(
+      x,
+      z,
+      largura,
+      profundidade
+    ) {
+
+      const geometry =
+        new THREE.BoxGeometry(
+          largura,
+          0.15,
+          profundidade
+        );
+
+      const rua =
+        new THREE.Mesh(
+          geometry,
+          roadMaterial
+        );
+
+      rua.position.set(
+        x,
+        0.08,
+        z
+      );
+
+      scene.add(rua);
+    }
+
+    // Avenida principal
+    criarRua(
+      0,
+      0,
+      1200,
+      35
     );
 
-    janela.position.set(
-      x+xx,
-      10,
-      z-17.3
+    criarRua(
+      0,
+      0,
+      35,
+      1200
     );
 
-    cena.add(janela);
-  }
-}
-
-
-/* bairro */
-
-const casas=[
-[-420,-300],
-[-300,-300],
-[-180,-300],
-[-420,-180],
-[-300,-180],
-[-180,-180],
-[420,300],
-[300,300],
-[180,300],
-[420,180],
-[300,180],
-[180,180]
-];
-
-casas.forEach(p=>{
-  criarCasa(p[0],p[1]);
-});
-
-
-/* =====================================
-   LOTES
-===================================== */
-
-function criarLote(x,z){
-
-  const lote =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      82,.15,82
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0xb18a59
-    })
-  );
-
-  lote.position.set(
-    x,.08,z
-  );
-
-  cena.add(lote);
-
-
-  /* placa */
-
-  const placa =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      10,6,.5
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0xffffff
-    })
-  );
-
-  placa.position.set(
-    x,4,z-35
-  );
-
-  cena.add(placa);
-}
-
-criarLote(-420,60);
-criarLote(-300,60);
-criarLote(-180,60);
-criarLote(420,-60);
-
-
-/* =====================================
-   MERCADO
-===================================== */
-
-function criarMercado(x,z){
-
-  const estacionamento =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      125,.2,80
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x454545
-    })
-  );
-
-  estacionamento.position.set(
-    x,.1,z+70
-  );
-
-  cena.add(estacionamento);
-
-
-  const mercado =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      95,27,62
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0xe8e8e8
-    })
-  );
-
-  mercado.position.set(
-    x,13.5,z
-  );
-
-  mercado.castShadow=true;
-
-  cena.add(mercado);
-
-
-  const faixa =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      85,8,.8
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x1769aa
-    })
-  );
-
-  faixa.position.set(
-    x,20,z-31.5
-  );
-
-  cena.add(faixa);
-
-
-  const entrada =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      18,14,.8
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x75d9ff
-    })
-  );
-
-  entrada.position.set(
-    x,7,z-32
-  );
-
-  cena.add(entrada);
-}
-
-criarMercado(300,-300);
-
-
-/* =====================================
-   ÁRVORES
-===================================== */
-
-function criarArvore(x,z){
-
-  const tronco =
-  new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      1.5,2,10,8
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x70452b
-    })
-  );
-
-  tronco.position.set(
-    x,5,z
-  );
-
-  cena.add(tronco);
-
-
-  const copa =
-  new THREE.Mesh(
-    new THREE.SphereGeometry(
-      7,10,10
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x247a35
-    })
-  );
-
-  copa.position.set(
-    x,13,z
-  );
-
-  cena.add(copa);
-}
-
-for(let i=0;i<45;i++){
-
-  const x =
-  Math.round(
-    (Math.random()*1000-500)/40
-  )*40;
-
-  const z =
-  Math.round(
-    (Math.random()*1000-500)/40
-  )*40;
-
-  if(Math.abs(x)<40 &&
-     Math.abs(z)<40) continue;
-
-  criarArvore(x,z);
-}
-
-
-/* =====================================
-   POSTES
-===================================== */
-
-function criarPoste(x,z){
-
-  const poste =
-  new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      .4,.5,12,8
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x333333
-    })
-  );
-
-  poste.position.set(
-    x,6,z
-  );
-
-  cena.add(poste);
-
-
-  const lampada =
-  new THREE.Mesh(
-    new THREE.SphereGeometry(
-      1.2,8,8
-    ),
-    new THREE.MeshBasicMaterial({
-      color:0xffffcc
-    })
-  );
-
-  lampada.position.set(
-    x,12,z
-  );
-
-  cena.add(lampada);
-}
-
-for(let p=-480;p<=480;p+=80){
-
-  criarPoste(20,p);
-  criarPoste(-20,p);
-}
-
-
-/* =====================================
-   CARRO
-===================================== */
-
-function criarCarro(x,z,direcao){
-
-  const carro =
-  new THREE.Group();
-
-
-  const corpo =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      7,2.5,12
-    ),
-    new THREE.MeshStandardMaterial({
-      color:new THREE.Color(
-        Math.random(),
-        .2+Math.random()*.5,
-        .2+Math.random()*.5
-      )
-    })
-  );
-
-  corpo.position.y=2;
-
-  carro.add(corpo);
-
-
-  const teto =
-  new THREE.Mesh(
-    new THREE.BoxGeometry(
-      5,2.2,6
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x222222
-    })
-  );
-
-  teto.position.y=4;
-
-  carro.add(teto);
-
-
-  carro.position.set(
-    x,0,z
-  );
-
-  cena.add(carro);
-
-
-  return carro;
-}
-
-
-/* trânsito */
-
-const carros=[];
-
-for(let i=0;i<8;i++){
-
-  const carro=
-  criarCarro(
-    -500+i*130,
-    18,
-    1
-  );
-
-  carros.push({
-    objeto:carro,
-    velocidade:.5+Math.random()*.5
-  });
-}
-
-
-/* =====================================
-   PESSOAS / NPCs
-===================================== */
-
-function criarPessoa(x,z){
-
-  const pessoa =
-  new THREE.Group();
-
-
-  const corpo =
-  new THREE.Mesh(
-    new THREE.CapsuleGeometry(
-      1.2,3,4,8
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0x3155aa
-    })
-  );
-
-  corpo.position.y=2.5;
-
-  pessoa.add(corpo);
-
-
-  const cabeca =
-  new THREE.Mesh(
-    new THREE.SphereGeometry(
-      1.2,10,10
-    ),
-    new THREE.MeshStandardMaterial({
-      color:0xd29b72
-    })
-  );
-
-  cabeca.position.y=5.3;
-
-  pessoa.add(cabeca);
-
-
-  pessoa.position.set(
-    x,0,z
-  );
-
-  cena.add(pessoa);
-
-
-  return pessoa;
-}
-
-
-const pessoas=[];
-
-for(let i=0;i<15;i++){
-
-  const pessoa=
-  criarPessoa(
-    Math.random()*600-300,
-    M
-```
+    // Ruas horizontais
+    for (let z = -500; z <= 500; z += 100) {
+
+      criarRua(
+        0,
+        z,
+        1200,
+        18
+      );
+    }
+
+    // Ruas verticais
+    for (let x = -500; x <= 500; x += 100) {
+
+      criarRua(
+        x,
+        0,
+        18,
+        1200
+      );
+    }
+
+    // =========================
+    // PRÉDIOS
+    // =========================
+
+    function criarPredio(
+      x,
+      z,
+      largura,
+      altura,
+      profundidade,
+      cor
+    ) {
+
+      const predio =
+        criarCubo(
+          x,
+          altura / 2,
+          z,
+          largura,
+          altura,
+          profundidade,
+          cor
+        );
+
+      return predio;
+    }
+
+    const coresPredios = [
+      0x8d99ae,
+      0x6c757d,
+      0xb0bec5,
+      0x455a64,
+      0x78909c,
+      0x9e9e9e
+    ];
+
+    // =========================
+    // CENTRO DA CIDADE
+    // =========================
+
+    criarPredio(
+      -70,
+      -70,
+      45,
+      180,
+      45,
+      0x37474f
+    );
+
+    criarPredio(
+      70,
+      -70,
+      40,
+      140,
+      40,
+      0x607d8b
+    );
+
+    criarPredio(
+      -70,
+      70,
+      50,
+      220,
+      50,
+      0x455a64
+    );
+
+    criarPredio(
+      70,
+      70,
+      45,
+      160,
+      45,
+      0x78909c
+    );
+
+    // =========================
+    // OUTROS PRÉDIOS
+    // =========================
+
+    for (let i = 0; i < 70; i++) {
+
+      const x =
+        Math.floor(
+          (Math.random() * 1000 - 500) / 100
+        ) * 100 + 40;
+
+      const z =
+        Math.floor(
+          (Math.random() * 1000 - 500) / 100
+        ) * 100 + 40;
+
+      // Não colocar muito perto do centro
+      if (
+        Math.abs(x) < 120 &&
+        Math.abs(z) < 120
+      ) {
+        continue;
+      }
+
+      const largura =
+        25 + Math.random() * 30;
+
+      const profundidade =
+        25 + Math.random() * 30;
+
+      const altura =
+        30 + Math.random() * 130;
+
+      const cor =
+        coresPredios[
+          Math.floor(
+            Math.random() *
+            coresPredios.length
+          )
+        ];
+
+      criarPredio(
+        x,
+        z,
+        largura,
+        altura,
+        profundidade,
+        cor
+      );
+    }
+
+    // =========================
+    // CASAS
+    // =========================
+
+    function criarCasa(
+      x,
+      z
+    ) {
+
+      // casa
+      criarCubo(
+        x,
+        5,
+        z,
+        22,
+        10,
+        18,
+        0xe0d2b8
+      );
+
+      // telhado
+      const roofGeometry =
+        new THREE.ConeGeometry(
+          15,
+          8,
+          4
+        );
+
+      const roofMaterial =
+        new THREE.MeshStandardMaterial({
+          color: 0x8b3e2f
+        });
+
+      const roof =
+        new THREE.Mesh(
+          roofGeometry,
+          roofMaterial
+        );
+
+      roof.position.set(
+        x,
+        14,
+        z
+      );
+
+      roof.rotation.y =
+        Math.PI / 4;
+
+      roof.castShadow = true;
+
+      scene.add(roof);
+
+      // porta
+      criarCubo(
+        x,
+        3,
+        z - 9.2,
+        4,
+        6,
+        0.5,
+        0x553322
+      );
+    }
+
+    for (let i = 0; i < 25; i++) {
+
+      const x =
+        -450 +
+        Math.random() * 900;
+
+      const z =
+        -450 +
+        Math.random() * 900;
+
+      criarCasa(
+        x,
+        z
+      );
+    }
+
+    // =========================
+    // MERCADO
+    // =========================
+
+    criarCubo(
+      230,
+      12,
+      230,
+      55,
+      24,
+      45,
+      0xf1f1f1
+    );
+
+    criarCubo(
+      230,
+      25,
+      206,
+      45,
+      5,
+      2,
+      0xff3333
+    );
+
+    // =========================
+    // BANCO
+    // =========================
+
+    criarCubo(
+      -230,
+      12,
+      -230,
+      50,
+      24,
+      40,
+      0xd7c08a
+    );
+
+    criarCubo(
+      -230,
+      27,
+      -251,
+      40,
+      5,
+      2,
+      0x2455a4
+    );
+
+    // =========================
+    // LOTES
+    // =========================
+
+    function criarLote(
+      x,
+      z
+    ) {
+
+      const geometry =
+        new THREE.BoxGeometry(
+          45,
+          0.2,
+          35
+        );
+
+      const material =
+        new THREE.MeshStandardMaterial({
+          color: 0x777777
+        });
+
+      const lote =
+        new THREE.Mesh(
+          geometry,
+          material
+        );
+
+      lote.position.set(
+        x,
+        0.2,
+        z
+      );
+
+      scene.add(lote);
+
+      // pequena placa
+      criarCubo(
+        x,
+        3,
+        z,
+        5,
+        6,
+        1,
+        0xffffff
+      );
+    }
+
+    criarLote(
+      300,
+      -300
+    );
+
+    criarLote(
+      360,
+      -300
+    );
+
+    criarLote(
+      300,
+      -350
+    );
+
+    // =========================
+    // ÁRVORES
+    // =========================
+
+    function criarArvore(
+      x,
+      z
+    ) {
+
+      // tronco
+      criarCubo(
+        x,
+        4,
+        z,
+        2,
+        8,
+        2,
+        0x6b4423
+      );
+
+      const treeGeometry =
+        new THREE.SphereGeometry(
+          6,
+          12,
+          12
+        );
+
+      const treeMaterial =
+        new THREE.MeshStandardMaterial({
+          color: 0x236b2b
+        });
+
+      const copa =
+        new THREE.Mesh(
+          treeGeometry,
+          treeMaterial
+        );
+
+      copa.position.set(
+        x,
+        11,
+        z
+      );
+
+      copa.castShadow = true;
+
+      scene.add(copa);
+    }
+
+    for (let i = 0; i < 80; i++) {
+
+      criarArvore(
+        -550 +
+        Math.random() * 1100,
+
+        -550 +
+        Math.random() * 1100
+      );
+    }
+
+    // =========================
+    // CARROS
+    // =========================
+
+    const carros = [];
+
+    function criarCarro(
+      x,
+      z,
+      cor
+    ) {
+
+      const carro =
+        criarCubo(
+          x,
+          2,
+          z,
+          10,
+          4,
+          5,
+          cor
+        );
+
+      carro.userData.velocidade =
+        0.4 +
+        Math.random() * 0.5;
+
+      carros.push(carro);
+    }
+
+    for (let i = 0; i < 15; i++) {
+
+      criarCarro(
+        -500 +
+        Math.random() * 1000,
+
+        -17,
+
+        0xffffff *
+        Math.random()
+      );
+    }
+
+    // =========================
+    // JOGADOR
+    // =========================
+
+    const player =
+      criarCubo(
+        0,
+        3,
+        80,
+        4,
+        6,
+        4,
+        0x1769aa
+      );
+
+    player.userData.velocidade = 0.25;
+
+    // =========================
+    // CONTROLES
+    // =========================
+
+    const joystick =
+      document.getElementById(
+        "joystick"
+      );
+
+    const stick =
+      document.getElementById(
+        "stick"
+      );
+
+    const runButton =
+      document.getElementById(
+        "run"
+      );
+
+    let moveX = 0;
+    let moveZ = 0;
+    let correndo = false;
+
+    let joystickAtivo = false;
+
+    function atualizarJoystick(
+      clientX,
+      clientY
+    ) {
+
+      const rect =
+        joystick.getBoundingClientRect();
+
+      const centroX =
+        rect.left +
+        rect.width / 2;
+
+      const centroY =
+        rect.top +
+        rect.height / 2;
+
+      let dx =
+        clientX - centroX;
+
+      let dy =
+        clientY - centroY;
+
+      const distancia =
+        Math.sqrt(
+          dx * dx +
+          dy * dy
+        );
+
+      const limite = 35;
+
+      if (distancia > limite) {
+
+        dx =
+          dx /
+          distancia *
+          limite;
+
+        dy =
+          dy /
+          distancia *
+          limite;
+      }
+
+      stick.style.transform =
+        `translate(${dx}px, ${dy}px)`;
+
+      moveX =
+        dx / limite;
+
+      moveZ =
+        dy / limite;
+    }
+
+    joystick.addEventListener(
+      "touchstart",
+      function(e) {
+
+        joystickAtivo = true;
+
+        const t =
+          e.touches[0];
+
+        atualizarJoystick(
+          t.clientX,
+          t.clientY
+        );
+
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    joystick.addEventListener(
+      "touchmove",
+      function(e) {
+
+        if (!joystickAtivo)
+          return;
+
+        const t =
+          e.touches[0];
+
+        atualizarJoystick(
+          t.clientX,
+          t.clientY
+        );
+
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    joystick.addEventListener(
+      "touchend",
+      function() {
+
+        joystickAtivo = false;
+
+        moveX = 0;
+        moveZ = 0;
+
+        stick.style.transform =
+          "translate(0px, 0px)";
+      }
+    );
+
+    // =========================
+    // BOTÃO CORRER
+    // =========================
+
+    runButton.addEventListener(
+      "touchstart",
+      function(e) {
+
+        correndo = true;
+
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    runButton.addEventListener(
+      "touchend",
+      function() {
+
+        correndo = false;
+      }
+    );
+
+    // =========================
+    // CÂMERA
+    // =========================
+
+    let cameraAngle = 0;
+
+    let olhando = false;
+    let ultimoX = 0;
+
+    const look =
+      document.getElementById(
+        "look"
+      );
+
+    look.addEventListener(
+      "touchstart",
+      function(e) {
+
+        olhando = true;
+
+        ultimoX =
+          e.touches[0].clientX;
+
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    look.addEventListener(
+      "touchmove",
+      function(e) {
+
+        if (!olhando)
+          return;
+
+        const x =
+          e.touches[0].clientX;
+
+        const diferenca =
+          x - ultimoX;
+
+        cameraAngle -=
+          diferenca * 0.008;
+
+        ultimoX = x;
+
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    look.addEventListener(
+      "touchend",
+      function() {
+
+        olhando = false;
+      }
+    );
+
+    // =========================
+    // JOGO
+    // =========================
+
+    function animar() {
+
+      requestAnimationFrame(
+        animar
+      );
+
+      // velocidade
+      let velocidade =
+        player.userData.velocidade;
+
+      if (correndo) {
+        velocidade *= 2;
+      }
+
+      // movimento
+      const frenteX =
+        Math.sin(cameraAngle);
+
+      const frenteZ =
+        Math.cos(cameraAngle);
+
+      player.position.x +=
+        (
+          moveX * Math.cos(cameraAngle) +
+          moveZ * frenteX
+        ) * velocidade;
+
+      player.position.z +=
+        (
+          moveX * -frenteX +
+          moveZ * frenteZ
+        ) * velocidade;
+
+      // carros
+      for (const carro of carros) {
+
+        carro.position.x +=
+          carro.userData.velocidade;
+
+        if (
+          carro.position.x >
+          600
+        ) {
+
+          carro.position.x =
+            -600;
+        }
+      }
+
+      // câmera atrás do jogador
+      const distanciaCamera = 18;
+
+      camera.position.x =
+        player.position.x -
+        Math.sin(cameraAngle) *
+        distanciaCamera;
+
+      camera.position.z =
+        player.position.z -
+        Math.cos(cameraAngle) *
+        distanciaCamera;
+
+      camera.position.y =
+        player.position.y +
+        10;
+
+      camera.lookAt(
+        player.position.x,
+        player.position.y + 2,
+        player.position.z
+      );
+
+      renderer.render(
+        scene,
+        camera
+      );
+    }
+
+    animar();
+
+    // =========================
+    // AJUSTE DA TELA
+    // =========================
+
+    window.addEventListener(
+      "resize",
+      function() {
+
+        camera.aspect =
+          window.innerWidth /
+          window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+          window.innerWidth,
+          window.innerHeight
+        );
+      }
+    );
+
+  </script>
+
+</body>
+</html>
