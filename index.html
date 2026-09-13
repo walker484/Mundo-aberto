@@ -1,754 +1,1118 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 
-  <title>Mundo Aberto 3D</title>
+<title>Mundo Aberto 3D - Câmera</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #87ceeb;
-      font-family: Arial, sans-serif;
-    }
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#87ceeb;
+  font-family:Arial,sans-serif;
+}
 
-    #jogo {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+#jogo{
+  width:100%;
+  height:100%;
+  display:block;
+}
 
-    #informacoes {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 10;
+#info{
+  position:fixed;
+  top:10px;
+  left:10px;
+  z-index:20;
+  color:white;
+  background:rgba(0,0,0,.7);
+  padding:12px;
+  border-radius:12px;
+}
 
-      padding: 12px 16px;
+#joystick{
+  position:fixed;
+  left:20px;
+  bottom:20px;
+  width:125px;
+  height:125px;
+  border-radius:50%;
+  background:rgba(255,255,255,.18);
+  border:2px solid rgba(255,255,255,.4);
+  z-index:30;
+  touch-action:none;
+}
 
-      color: white;
-      background: rgba(0, 0, 0, 0.65);
+#controle{
+  position:absolute;
+  width:55px;
+  height:55px;
+  left:33px;
+  top:33px;
+  border-radius:50%;
+  background:rgba(255,255,255,.85);
+}
 
-      border-radius: 12px;
+#correr{
+  position:fixed;
+  right:25px;
+  bottom:30px;
+  width:80px;
+  height:80px;
+  border:0;
+  border-radius:50%;
+  background:rgba(255,255,255,.85);
+  font-weight:bold;
+  z-index:30;
+  touch-action:none;
+}
 
-      font-size: 14px;
-      line-height: 1.5;
-    }
+/* ÁREA PARA OLHAR */
 
-    #joystick {
-      position: fixed;
-      left: 25px;
-      bottom: 25px;
-
-      width: 125px;
-      height: 125px;
-
-      border-radius: 50%;
-
-      background: rgba(255, 255, 255, 0.18);
-      border: 2px solid rgba(255, 255, 255, 0.4);
-
-      z-index: 20;
-
-      touch-action: none;
-    }
-
-    #controle {
-      position: absolute;
-
-      width: 55px;
-      height: 55px;
-
-      left: 33px;
-      top: 33px;
-
-      border-radius: 50%;
-
-      background: rgba(255, 255, 255, 0.8);
-
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-    }
-
-    #correr {
-      position: fixed;
-
-      right: 25px;
-      bottom: 35px;
-
-      width: 78px;
-      height: 78px;
-
-      border: none;
-      border-radius: 50%;
-
-      background: rgba(255,255,255,0.8);
-
-      font-weight: bold;
-
-      z-index: 20;
-
-      touch-action: none;
-    }
-  </style>
+#olhar{
+  position:fixed;
+  right:0;
+  top:0;
+  width:55%;
+  height:75%;
+  z-index:15;
+  touch-action:none;
+}
+</style>
 </head>
 
 <body>
 
-  <div id="informacoes">
-    🌎 MUNDO ABERTO 3D<br>
-    🏙️ Cidade 1<br>
-    💰 Dinheiro: R$ 0
-  </div>
+<div id="info">
+🏙️ MUNDO ABERTO<br>
+📍 Cidade 1<br>
+💰 R$ 0
+</div>
 
-  <canvas id="jogo"></canvas>
+<canvas id="jogo"></canvas>
 
-  <div id="joystick">
-    <div id="controle"></div>
-  </div>
+<!-- área direita da tela -->
+<div id="olhar"></div>
 
-  <button id="correr">CORRER</button>
+<!-- joystick -->
+<div id="joystick">
+  <div id="controle"></div>
+</div>
 
-  <script type="module">
-
-    import * as THREE from
-      "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-
-
-    // ==================================================
-    // CENA
-    // ==================================================
-
-    const cena = new THREE.Scene();
-
-    cena.background =
-      new THREE.Color(0x87ceeb);
+<button id="correr">CORRER</button>
 
 
-    // ==================================================
-    // CÂMERA
-    // ==================================================
+<script type="module">
 
-    const camera =
-      new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        5000
-      );
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
-    // ==================================================
-    // RENDERIZADOR
-    // ==================================================
+/* =====================================================
+CENA
+===================================================== */
 
-    const renderizador =
-      new THREE.WebGLRenderer({
-        canvas: document.getElementById("jogo"),
-        antialias: true
-      });
+const cena = new THREE.Scene();
 
-    renderizador.setSize(
-      window.innerWidth,
-      window.innerHeight
-    );
-
-    renderizador.setPixelRatio(
-      Math.min(window.devicePixelRatio, 2)
-    );
-
-    renderizador.shadowMap.enabled = true;
+cena.background =
+new THREE.Color(0x79bde8);
 
 
-    // ==================================================
-    // ILUMINAÇÃO
-    // ==================================================
+/* =====================================================
+CÂMERA
+===================================================== */
 
-    const sol =
-      new THREE.DirectionalLight(
-        0xffffff,
-        2
-      );
-
-    sol.position.set(
-      500,
-      800,
-      400
-    );
-
-    sol.castShadow = true;
-
-    cena.add(sol);
+const camera =
+new THREE.PerspectiveCamera(
+  70,
+  innerWidth / innerHeight,
+  .1,
+  5000
+);
 
 
-    const luzAmbiente =
-      new THREE.HemisphereLight(
-        0xffffff,
-        0x557755,
-        1.5
-      );
+/* =====================================================
+RENDER
+===================================================== */
 
-    cena.add(luzAmbiente);
+const renderer =
+new THREE.WebGLRenderer({
+  canvas:document.getElementById("jogo"),
+  antialias:true
+});
 
+renderer.setSize(
+  innerWidth,
+  innerHeight
+);
 
-    // ==================================================
-    // TERRENO GRANDE
-    // ==================================================
+renderer.setPixelRatio(
+  Math.min(devicePixelRatio,1.5)
+);
 
-    const terrenoGeometria =
-      new THREE.PlaneGeometry(
-        2000,
-        2000
-      );
-
-    const terrenoMaterial =
-      new THREE.MeshStandardMaterial({
-        color: 0x4f8f48
-      });
-
-    const terreno =
-      new THREE.Mesh(
-        terrenoGeometria,
-        terrenoMaterial
-      );
-
-    terreno.rotation.x =
-      -Math.PI / 2;
-
-    terreno.receiveShadow = true;
-
-    cena.add(terreno);
+renderer.shadowMap.enabled=true;
 
 
-    // ==================================================
-    // FUNÇÃO PARA CRIAR OBJETOS
-    // ==================================================
+/* =====================================================
+LUZ
+===================================================== */
 
-    function criarBloco(
-      x,
-      y,
-      z,
-      largura,
-      altura,
-      profundidade,
-      cor
-    ) {
+const sol =
+new THREE.DirectionalLight(
+  0xffffff,
+  2.2
+);
 
-      const geometria =
-        new THREE.BoxGeometry(
-          largura,
-          altura,
-          profundidade
-        );
+sol.position.set(
+  500,
+  900,
+  300
+);
 
-      const material =
-        new THREE.MeshStandardMaterial({
-          color: cor
-        });
+sol.castShadow=true;
 
-      const objeto =
-        new THREE.Mesh(
-          geometria,
-          material
-        );
+cena.add(sol);
 
-      objeto.position.set(
-        x,
+
+const ambiente =
+new THREE.HemisphereLight(
+  0xffffff,
+  0x456b45,
+  1.5
+);
+
+cena.add(ambiente);
+
+
+/* =====================================================
+TERRENO
+===================================================== */
+
+const terreno =
+new THREE.Mesh(
+  new THREE.PlaneGeometry(2000,2000),
+  new THREE.MeshStandardMaterial({
+    color:0x4d8b48
+  })
+);
+
+terreno.rotation.x=-Math.PI/2;
+
+terreno.receiveShadow=true;
+
+cena.add(terreno);
+
+
+/* =====================================================
+FUNÇÃO PARA CRIAR BLOCOS
+===================================================== */
+
+function criar(
+  x,y,z,
+  w,h,d,
+  cor
+){
+
+  const objeto =
+  new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({
+      color:cor
+    })
+  );
+
+  objeto.position.set(
+    x,y,z
+  );
+
+  objeto.castShadow=true;
+  objeto.receiveShadow=true;
+
+  cena.add(objeto);
+
+  return objeto;
+}
+
+
+/* =====================================================
+RUAS
+===================================================== */
+
+function rua(
+  x,z,w,d
+){
+
+  criar(
+    x,
+    .08,
+    z,
+    w,
+    .16,
+    d,
+    0x292929
+  );
+}
+
+
+rua(0,0,42,1900);
+rua(0,0,1900,42);
+
+
+for(
+  let z=-900;
+  z<=900;
+  z+=100
+){
+
+  rua(
+    0,
+    z,
+    16,
+    1900
+  );
+}
+
+
+for(
+  let x=-900;
+  x<=900;
+  x+=100
+){
+
+  rua(
+    x,
+    0,
+    16,
+    1900
+  );
+}
+
+
+/* =====================================================
+CASAS
+===================================================== */
+
+function casa(x,z,cor){
+
+  criar(
+    x,
+    4,
+    z,
+    30,
+    8,
+    25,
+    cor
+  );
+
+  criar(
+    x,
+    9,
+    z,
+    33,
+    1.5,
+    28,
+    0x8b392e
+  );
+
+  criar(
+    x,
+    2,
+    z-13,
+    4,
+    4,
+    .5,
+    0x51351f
+  );
+
+  criar(
+    x-8,
+    4,
+    z-13,
+    5,
+    4,
+    .4,
+    0x70c7e8
+  );
+
+  criar(
+    x+8,
+    4,
+    z-13,
+    5,
+    4,
+    .4,
+    0x70c7e8
+  );
+}
+
+
+for(
+  let x=-800;
+  x<=800;
+  x+=100
+){
+
+  casa(
+    x,
+    -500,
+    0xe6c79f
+  );
+
+  casa(
+    x,
+    -650,
+    0xd9d9d9
+  );
+
+  casa(
+    x,
+    500,
+    0xf0d5d5
+  );
+
+  casa(
+    x,
+    650,
+    0xd4e5c2
+  );
+}
+
+
+/* =====================================================
+PRÉDIOS
+===================================================== */
+
+function predio(
+  x,z,w,h,d,cor
+){
+
+  criar(
+    x,
+    h/2,
+    z,
+    w,
+    h,
+    d,
+    cor
+  );
+
+  for(
+    let y=12;
+    y<h-5;
+    y+=12
+  ){
+
+    for(
+      let xx=-w/2+7;
+      xx<w/2-3;
+      xx+=11
+    ){
+
+      criar(
+        x+xx,
         y,
-        z
-      );
-
-      objeto.castShadow = true;
-      objeto.receiveShadow = true;
-
-      cena.add(objeto);
-
-      return objeto;
-    }
-
-
-    // ==================================================
-    // ESTRUTURA DA CIDADE
-    // ==================================================
-
-    const materialRua =
-      new THREE.MeshStandardMaterial({
-        color: 0x292929
-      });
-
-
-    function criarRua(
-      x,
-      z,
-      largura,
-      comprimento
-    ) {
-
-      const geometria =
-        new THREE.BoxGeometry(
-          largura,
-          0.2,
-          comprimento
-        );
-
-      const rua =
-        new THREE.Mesh(
-          geometria,
-          materialRua
-        );
-
-      rua.position.set(
-        x,
-        0.1,
-        z
-      );
-
-      cena.add(rua);
-    }
-
-
-    // ==================================================
-    // AVENIDAS PRINCIPAIS
-    // ==================================================
-
-    criarRua(
-      0,
-      0,
-      40,
-      1900
-    );
-
-    criarRua(
-      0,
-      0,
-      1900,
-      40
-    );
-
-
-    // ==================================================
-    // RUAS DOS BAIRROS
-    // ==================================================
-
-    for (
-      let z = -900;
-      z <= 900;
-      z += 120
-    ) {
-
-      criarRua(
-        0,
-        z,
-        18,
-        1900
-      );
-    }
-
-
-    for (
-      let x = -900;
-      x <= 900;
-      x += 120
-    ) {
-
-      criarRua(
-        x,
-        0,
-        18,
-        1900
-      );
-    }
-
-
-    // ==================================================
-    // PRAÇA CENTRAL
-    // ==================================================
-
-    criarBloco(
-      0,
-      0.2,
-      0,
-      100,
-      0.4,
-      100,
-      0x6da95b
-    );
-
-
-    // ==================================================
-    // ÁREA DO CENTRO
-    // ==================================================
-
-    const centroPredios = [
-
-      [-70, -70, 45, 180, 45],
-      [70, -70, 45, 140, 45],
-      [-70, 70, 45, 220, 45],
-      [70, 70, 45, 160, 45],
-
-      [-180, -70, 40, 100, 40],
-      [180, -70, 40, 120, 40],
-      [-180, 70, 40, 90, 40],
-      [180, 70, 40, 150, 40]
-
-    ];
-
-
-    for (
-      const predio of centroPredios
-    ) {
-
-      criarBloco(
-        predio[0],
-        predio[3] / 2,
-        predio[1],
-        predio[2],
-        predio[3],
-        predio[4],
-        0x667985
-      );
-    }
-
-
-    // ==================================================
-    // BAIRROS
-    // ==================================================
-
-    // Espaços reservados para futuras áreas:
-
-    const bairros = {
-
-      centro: {
-        x: 0,
-        z: 0
-      },
-
-      residencialNorte: {
-        x: 0,
-        z: -400
-      },
-
-      residencialSul: {
-        x: 0,
-        z: 400
-      },
-
-      comercialLeste: {
-        x: 400,
-        z: 0
-      },
-
-      comercialOeste: {
-        x: -400,
-        z: 0
-      },
-
-      mansoes: {
-        x: 650,
-        z: -500
-      },
-
-      aeroporto: {
-        x: 750,
-        z: 650
-      }
-
-    };
-
-
-    // ==================================================
-    // JOGADOR
-    // ==================================================
-
-    const jogador =
-      criarBloco(
-        0,
-        3,
-        100,
-        4,
+        z-d/2-.25,
         6,
-        4,
-        0x1769aa
-      );
-
-
-    jogador.userData.velocidade =
-      0.35;
-
-
-    // ==================================================
-    // CONTROLE
-    // ==================================================
-
-    const joystick =
-      document.getElementById(
-        "joystick"
-      );
-
-    const controle =
-      document.getElementById(
-        "controle"
-      );
-
-    const botaoCorrer =
-      document.getElementById(
-        "correr"
-      );
-
-
-    let movimentoX = 0;
-    let movimentoZ = 0;
-
-    let correndo = false;
-
-    let joystickAtivo = false;
-
-
-    function moverJoystick(
-      x,
-      y
-    ) {
-
-      const rect =
-        joystick.getBoundingClientRect();
-
-      const centroX =
-        rect.left +
-        rect.width / 2;
-
-      const centroY =
-        rect.top +
-        rect.height / 2;
-
-
-      let dx =
-        x - centroX;
-
-      let dy =
-        y - centroY;
-
-
-      const distancia =
-        Math.sqrt(
-          dx * dx +
-          dy * dy
-        );
-
-
-      const limite = 35;
-
-
-      if (
-        distancia > limite
-      ) {
-
-        dx =
-          dx / distancia * limite;
-
-        dy =
-          dy / distancia * limite;
-      }
-
-
-      controle.style.transform =
-        `translate(${dx}px, ${dy}px)`;
-
-
-      movimentoX =
-        dx / limite;
-
-      movimentoZ =
-        dy / limite;
-    }
-
-
-    joystick.addEventListener(
-      "touchstart",
-      function(evento) {
-
-        joystickAtivo = true;
-
-        const toque =
-          evento.touches[0];
-
-        moverJoystick(
-          toque.clientX,
-          toque.clientY
-        );
-
-        evento.preventDefault();
-
-      },
-      { passive: false }
-    );
-
-
-    joystick.addEventListener(
-      "touchmove",
-      function(evento) {
-
-        if (!joystickAtivo)
-          return;
-
-        const toque =
-          evento.touches[0];
-
-        moverJoystick(
-          toque.clientX,
-          toque.clientY
-        );
-
-        evento.preventDefault();
-
-      },
-      { passive: false }
-    );
-
-
-    joystick.addEventListener(
-      "touchend",
-      function() {
-
-        joystickAtivo = false;
-
-        movimentoX = 0;
-        movimentoZ = 0;
-
-        controle.style.transform =
-          "translate(0px, 0px)";
-      }
-    );
-
-
-    // ==================================================
-    // CORRER
-    // ==================================================
-
-    botaoCorrer.addEventListener(
-      "touchstart",
-      function(evento) {
-
-        correndo = true;
-
-        evento.preventDefault();
-
-      },
-      { passive: false }
-    );
-
-
-    botaoCorrer.addEventListener(
-      "touchend",
-      function() {
-
-        correndo = false;
-
-      }
-    );
-
-
-    // ==================================================
-    // CÂMERA
-    // ==================================================
-
-    camera.position.set(
-      0,
-      10,
-      120
-    );
-
-
-    // ==================================================
-    // LOOP DO JOGO
-    // ==================================================
-
-    function atualizar() {
-
-      requestAnimationFrame(
-        atualizar
-      );
-
-
-      let velocidade =
-        jogador.userData.velocidade;
-
-
-      if (correndo) {
-
-        velocidade *= 2;
-      }
-
-
-      jogador.position.x +=
-        movimentoX * velocidade;
-
-
-      jogador.position.z +=
-        movimentoZ * velocidade;
-
-
-      // câmera acompanha o jogador
-
-      camera.position.x =
-        jogador.position.x;
-
-      camera.position.z =
-        jogador.position.z + 18;
-
-      camera.position.y =
-        jogador.position.y + 10;
-
-
-      camera.lookAt(
-        jogador.position.x,
-        jogador.position.y,
-        jogador.position.z
-      );
-
-
-      renderizador.render(
-        cena,
-        camera
+        5,
+        .35,
+        0x9bd5e8
       );
     }
+  }
+}
 
 
-    atualizar();
+/* centro */
+
+predio(
+  -110,
+  -110,
+  55,
+  160,
+  50,
+  0x596d7a
+);
+
+predio(
+  110,
+  -110,
+  55,
+  210,
+  50,
+  0x777d83
+);
+
+predio(
+  -110,
+  110,
+  55,
+  250,
+  50,
+  0x485b69
+);
+
+predio(
+  110,
+  110,
+  55,
+  180,
+  50,
+  0x887b70
+);
 
 
-    // ==================================================
-    // AJUSTE DA TELA
-    // ==================================================
+/* prédios distantes */
 
-    window.addEventListener(
-      "resize",
-      function() {
+predio(
+  -300,
+  -250,
+  50,
+  100,
+  50,
+  0x727b82
+);
 
-        camera.aspect =
-          window.innerWidth /
-          window.innerHeight;
+predio(
+  300,
+  -300,
+  65,
+  280,
+  60,
+  0x526778
+);
 
-        camera.updateProjectionMatrix();
+predio(
+  420,
+  -300,
+  60,
+  330,
+  55,
+  0x697b88
+);
 
-        renderizador.setSize(
-          window.innerWidth,
-          window.innerHeight
-        );
+predio(
+  300,
+  300,
+  65,
+  230,
+  60,
+  0x707b82
+);
 
-      }
+
+/* =====================================================
+LOJAS
+===================================================== */
+
+function loja(x,z,cor){
+
+  criar(
+    x,
+    5,
+    z,
+    38,
+    10,
+    32,
+    cor
+  );
+
+  criar(
+    x,
+    5,
+    z-16,
+    25,
+    7,
+    .4,
+    0x9bd8ed
+  );
+}
+
+
+loja(520,-50,0xe45b55);
+loja(590,-50,0xf0b52c);
+loja(660,-50,0x5b9b61);
+
+loja(520,100,0x7658a8);
+loja(590,100,0xd47a35);
+
+
+/* =====================================================
+SUPERMERCADO
+===================================================== */
+
+criar(
+  550,
+  8,
+  -300,
+  100,
+  16,
+  70,
+  0xd5d5d5
+);
+
+criar(
+  550,
+  16.5,
+  -335,
+  102,
+  3,
+  72,
+  0x2364a5
+);
+
+
+/* =====================================================
+BANCO
+===================================================== */
+
+criar(
+  400,
+  12,
+  80,
+  80,
+  24,
+  55,
+  0x59636a
+);
+
+
+/* =====================================================
+MANSÕES
+===================================================== */
+
+function mansao(x,z){
+
+  criar(
+    x,
+    7,
+    z,
+    65,
+    14,
+    50,
+    0xf1dfbd
+  );
+
+  criar(
+    x,
+    15,
+    z,
+    70,
+    2,
+    55,
+    0x303030
+  );
+
+  criar(
+    x+42,
+    .5,
+    z,
+    22,
+    1,
+    35,
+    0x38aee9
+  );
+}
+
+
+mansao(720,-500);
+mansao(850,-500);
+mansao(720,-650);
+mansao(850,-650);
+
+
+/* =====================================================
+ÁRVORES
+===================================================== */
+
+function arvore(x,z){
+
+  criar(
+    x,
+    4,
+    z,
+    3,
+    8,
+    3,
+    0x704426
+  );
+
+  const copa =
+  new THREE.Mesh(
+    new THREE.SphereGeometry(
+      8,
+      12,
+      12
+    ),
+    new THREE.MeshStandardMaterial({
+      color:0x247738
+    })
+  );
+
+  copa.position.set(
+    x,
+    11,
+    z
+  );
+
+  cena.add(copa);
+}
+
+
+for(
+  let x=-900;
+  x<=900;
+  x+=90
+){
+
+  arvore(x,-70);
+  arvore(x,70);
+  arvore(x,-350);
+  arvore(x,350);
+}
+
+
+/* =====================================================
+PRAÇA
+===================================================== */
+
+criar(
+  0,
+  .25,
+  0,
+  110,
+  .5,
+  110,
+  0x6da95b
+);
+
+
+/* fonte */
+
+const fonte =
+new THREE.Mesh(
+  new THREE.CylinderGeometry(
+    16,16,1,32
+  ),
+  new THREE.MeshStandardMaterial({
+    color:0xaaaaaa
+  })
+);
+
+fonte.position.set(
+  0,
+  1,
+  0
+);
+
+cena.add(fonte);
+
+
+/* =====================================================
+JOGADOR
+===================================================== */
+
+const jogador =
+criar(
+  0,
+  3,
+  180,
+  4,
+  6,
+  4,
+  0x1769aa
+);
+
+jogador.userData.velocidade=.4;
+
+
+/* =====================================================
+JOYSTICK
+===================================================== */
+
+const joystick =
+document.getElementById(
+  "joystick"
+);
+
+const controle =
+document.getElementById(
+  "controle"
+);
+
+const botaoCorrer =
+document.getElementById(
+  "correr"
+);
+
+
+let movimentoX=0;
+let movimentoZ=0;
+
+let joystickAtivo=false;
+let correndo=false;
+
+
+function moverJoystick(x,y){
+
+  const rect=
+  joystick.getBoundingClientRect();
+
+  const centroX=
+  rect.left+
+  rect.width/2;
+
+  const centroY=
+  rect.top+
+  rect.height/2;
+
+  let dx=x-centroX;
+  let dy=y-centroY;
+
+  const limite=35;
+
+  const distancia=
+  Math.sqrt(
+    dx*dx+
+    dy*dy
+  );
+
+  if(distancia>limite){
+
+    dx=
+    dx/distancia*
+    limite;
+
+    dy=
+    dy/distancia*
+    limite;
+  }
+
+  controle.style.transform=
+  `translate(${dx}px,${dy}px)`;
+
+  movimentoX=
+  dx/limite;
+
+  movimentoZ=
+  dy/limite;
+}
+
+
+joystick.addEventListener(
+  "touchstart",
+  e=>{
+
+    joystickAtivo=true;
+
+    moverJoystick(
+      e.touches[0].clientX,
+      e.touches[0].clientY
     );
 
-  </script>
+    e.preventDefault();
+
+  },
+  {passive:false}
+);
+
+
+joystick.addEventListener(
+  "touchmove",
+  e=>{
+
+    if(!joystickAtivo)
+      return;
+
+    moverJoystick(
+      e.touches[0].clientX,
+      e.touches[0].clientY
+    );
+
+    e.preventDefault();
+
+  },
+  {passive:false}
+);
+
+
+joystick.addEventListener(
+  "touchend",
+  ()=>{
+
+    joystickAtivo=false;
+
+    movimentoX=0;
+    movimentoZ=0;
+
+    controle.style.transform=
+    "translate(0,0)";
+  }
+);
+
+
+/* =====================================================
+CORRER
+===================================================== */
+
+botaoCorrer.addEventListener(
+  "touchstart",
+  e=>{
+
+    correndo=true;
+
+    e.preventDefault();
+
+  },
+  {passive:false}
+);
+
+
+botaoCorrer.addEventListener(
+  "touchend",
+  ()=>{
+
+    correndo=false;
+
+  }
+);
+
+
+/* =====================================================
+CÂMERA
+===================================================== */
+
+let rotacaoHorizontal=0;
+
+let rotacaoVertical=0;
+
+let tocandoCamera=false;
+
+let ultimoX=0;
+
+let ultimoY=0;
+
+
+const areaOlhar =
+document.getElementById(
+  "olhar"
+);
+
+
+/* começa olhando para frente */
+
+camera.position.set(
+  0,
+  10,
+  200
+);
+
+
+/* tocar na direita */
+
+areaOlhar.addEventListener(
+  "touchstart",
+  e=>{
+
+    tocandoCamera=true;
+
+    ultimoX=
+    e.touches[0].clientX;
+
+    ultimoY=
+    e.touches[0].clientY;
+
+    e.preventDefault();
+
+  },
+  {passive:false}
+);
+
+
+/* arrastar o dedo */
+
+areaOlhar.addEventListener(
+  "touchmove",
+  e=>{
+
+    if(!tocandoCamera)
+      return;
+
+    const x=
+    e.touches[0].clientX;
+
+    const y=
+    e.touches[0].clientY;
+
+
+    const dx=
+    x-ultimoX;
+
+    const dy=
+    y-ultimoY;
+
+
+    ultimoX=x;
+    ultimoY=y;
+
+
+    /* esquerda / direita */
+
+    rotacaoHorizontal -=
+    dx*0.006;
+
+
+    /* cima / baixo */
+
+    rotacaoVertical -=
+    dy*0.006;
+
+
+    /* limite para olhar para cima/baixo */
+
+    rotacaoVertical=
+    Math.max(
+      -1.0,
+      Math.min(
+        1.0,
+        rotacaoVertical
+      )
+    );
+
+
+    e.preventDefault();
+
+  },
+  {passive:false}
+);
+
+
+areaOlhar.addEventListener(
+  "touchend",
+  ()=>{
+    tocandoCamera=false;
+  }
+);
+
+
+/* =====================================================
+LOOP
+===================================================== */
+
+function atualizar(){
+
+  requestAnimationFrame(
+    atualizar
+  );
+
+
+  let velocidade=
+  jogador.userData.velocidade;
+
+
+  if(correndo)
+    velocidade*=2;
+
+
+  /* movimento */
+
+  jogador.position.x +=
+  movimentoX*
+  velocidade;
+
+  jogador.position.z +=
+  movimentoZ*
+  velocidade;
+
+
+  /* posição da câmera */
+
+  const distanciaCamera=18;
+
+  const alturaCamera=10;
+
+
+  camera.position.x=
+  jogador.position.x +
+  Math.sin(rotacaoHorizontal)*
+  distanciaCamera;
+
+
+  camera.position.z=
+  jogador.position.z +
+  Math.cos(rotacaoHorizontal)*
+  distanciaCamera;
+
+
+  camera.position.y=
+  jogador.position.y+
+  alturaCamera;
+
+
+  /* ponto que a câmera olha */
+
+  const alvoX=
+  jogador.position.x -
+  Math.sin(rotacaoHorizontal)*10;
+
+
+  const alvoY=
+  jogador.position.y+
+  4+
+  Math.sin(rotacaoVertical)*20;
+
+
+  const alvoZ=
+  jogador.position.z -
+  Math.cos(rotacaoHorizontal)*10;
+
+
+  camera.lookAt(
+    alvoX,
+    alvoY,
+    alvoZ
+  );
+
+
+  renderer.render(
+    cena,
+    camera
+  );
+}
+
+
+atualizar();
+
+
+/* =====================================================
+TELA
+===================================================== */
+
+window.addEventListener(
+  "resize",
+  ()=>{
+
+    camera.aspect=
+    innerWidth/
+    innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      innerWidth,
+      innerHeight
+    );
+  }
+);
+
+</script>
 
 </body>
 </html>
